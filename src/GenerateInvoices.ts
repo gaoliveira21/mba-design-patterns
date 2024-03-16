@@ -1,5 +1,6 @@
-import pgp from 'pg-promise'
 import moment from 'moment'
+
+import { ContractRepository } from './ContractsRepository'
 
 export type Input = {
   month: number
@@ -13,17 +14,16 @@ type Output = {
 }
 
 export class GenerateInvoices {
+  constructor(private readonly contractsRepository: ContractRepository) {}
+
   async execute(input: Input): Promise<Output[]> {
-    const connection = pgp()("postgres://postgres:postgres@localhost:5432/postgres")
-    const contracts = await connection.query("select * from mba_design_patterns.contracts")
+    const contracts = await this.contractsRepository.list()
 
     const output: Output[] = []
 
     for (const contract of contracts) {
       if (input.type === "cash") {
-        const payments = await connection.query("select * from mba_design_patterns.payments where id_contract = $1", contract.id)
-
-        for (const payment of payments) {
+        for (const payment of contract.payments) {
           if (payment.date.getMonth() + 1 !== input.month || payment.date.getFullYear() !== input.year) {
             continue
           }
@@ -49,8 +49,6 @@ export class GenerateInvoices {
         }
       }
     }
-
-    await connection.$pool.end()
 
     return output
   }
