@@ -1,31 +1,15 @@
-import { ContractRepository } from "../src/ContractsRepository";
+import { ContractsDatabaseRepository } from "../src/ContractsDatabaseRepository";
+import { DbConnection } from "../src/DbConnection";
 import { GenerateInvoices, Input } from "../src/GenerateInvoices";
+import { PgPromiseAdapter } from "../src/PgPromiseAdapter";
 
-let contractsRepository: ContractRepository
 let generateInvoices: GenerateInvoices
+let connection: DbConnection
 beforeEach(() => {
-  contractsRepository = {
-  	async list (): Promise<any> {
-  		return [
-  			{
-  				idContract: "",
-  				description: "",
-  				periods: 12,
-  				amount: "6000",
-  				date: new Date("2022-01-01T10:00:00"),
-  				payments: [
-  					{
-  						idPayment: "",
-  						idContract: "",
-  						amount: 6000,
-  						date: new Date("2022-01-05T10:00:00")
-  					}
-  				]
-  			}
-  		]
-  	}
-  }
+  if (!connection)
+    connection = new PgPromiseAdapter()
 
+  const contractsRepository = new ContractsDatabaseRepository(connection)
   generateInvoices = new GenerateInvoices(
     contractsRepository
   );
@@ -55,3 +39,6 @@ test("Deve gerar notas fiscais por regime de competência", async function () {
   expect(output.at(0)?.amount).toBe(500)
 })
 
+afterAll(async () => {
+  await connection.close()
+})
