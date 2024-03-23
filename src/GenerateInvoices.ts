@@ -1,6 +1,8 @@
 import moment from 'moment'
 
 import { ContractRepository } from './ContractsRepository'
+import { Presenter } from './Presenter'
+import { JsonPresenter } from './JsonPresenter'
 
 export type Input = {
   month: number
@@ -8,13 +10,16 @@ export type Input = {
   type: "cash" | "accrual"
 }
 
-type Output = {
-  date: string
+export type Output = {
+  date: Date
   amount: number
 }
 
 export class GenerateInvoices {
-  constructor(private readonly contractsRepository: ContractRepository) {}
+  constructor(
+    private readonly contractsRepository: ContractRepository,
+    private readonly presenter: Presenter = new JsonPresenter()
+  ) {}
 
   async execute(input: Input): Promise<Output[]> {
     const contracts = await this.contractsRepository.list()
@@ -25,12 +30,12 @@ export class GenerateInvoices {
       const invoices = contract.generateInvoices(input.month, input.year, input.type)
       for (const invoice of invoices) {
         output.push({
-          date: moment(invoice.date).format("YYYY-MM-DD"),
+          date: invoice.date,
           amount: invoice.amount
         })
       }
     }
 
-    return output
+    return this.presenter.present(output)
   }
 }
