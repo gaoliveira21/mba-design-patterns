@@ -3,6 +3,7 @@ import moment from 'moment'
 import { ContractRepository } from './ContractsRepository'
 import { Presenter } from './Presenter'
 import { JsonPresenter } from './JsonPresenter'
+import { Usecase } from './Usecase'
 
 export type Input = {
   month: number
@@ -15,7 +16,7 @@ export type Output = {
   amount: number
 }
 
-export class GenerateInvoices {
+export class GenerateInvoices implements Usecase {
   constructor(
     private readonly contractsRepository: ContractRepository,
     private readonly presenter: Presenter = new JsonPresenter()
